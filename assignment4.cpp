@@ -176,6 +176,7 @@ class CovidDB {
 			int inner = ifContain(country, index);
 			if (inner == -1) {
 				DataEntry null;
+				null.setCases(0);
 				return null;
 			} else {
 				return dataBase[index][inner];
@@ -186,7 +187,7 @@ class CovidDB {
 			int index = hash(country);
 			int inner = ifContain(country, index);
 			if (inner == -1) {
-				cout << "\nThere is no such country\n" << endl;
+				cout << "Invalid input, there is no such entry\n" << endl;
 			} else {
 				dataBase[index].erase(dataBase[index].begin() + inner);
 				cout << "Entry of " << country << " successfully deleted\n" << endl;
@@ -196,7 +197,7 @@ class CovidDB {
 		void display() {
 			cout << "\nCovid Database" << endl;
 			for (int i = 0; i < tableSize; i++) {
-				cout << "slot " << i << ": ";
+				cout << "\tSLOT " << i << ": ";
 				for (int j = 0; j < dataBase[i].size(); j++) {
 					if (j != 0) {
 						cout << "-> ";
@@ -238,54 +239,75 @@ void userInterface(vector<cvsdata> recordList) {
 			}
 			
 		} else if (choice == 2) {		// add data
-			DataEntry addition;
-			string date;
-			string country;
-			int cases;
-			int deaths;
+			if (initial) {
+				DataEntry addition;
+				string date;
+				string country;
+				int cases;
+				int deaths;
 
-			cout << "\nEnter the date (mm/dd/yyyy) > ";
-			cin >> date;
-			addition.setDate(date);
-			cout << "Enter the country > ";
-			cin >> country;
-			addition.setCountry(country);
-			cout << "Enter number of cases > ";
-			cin >> cases;
-			addition.setCases(cases);
-			cout << "Enter number of death cases > ";
-			cin >> deaths;
-			addition.setDeaths(deaths);
+				cout << "\nEnter the date (mm/dd/yyyy) > ";
+				cin >> date;
+				addition.setDate(date);
+				cout << "Enter the country > ";
+				cin >> country;
+				addition.setCountry(country);
+				cout << "Enter number of cases > ";
+				cin >> cases;
+				addition.setCases(cases);
+				cout << "Enter number of death cases > ";
+				cin >> deaths;
+				addition.setDeaths(deaths);
 			
-			if (databaseC.add(addition)) {
-				cout << "Entry successfully added\n" << endl;
+				if (databaseC.add(addition)) {
+					cout << "Entry successfully added\n" << endl;
+				} else {
+					cout << "Invalid date, failed to add entry\n" << endl;
+				}
 			} else {
-				cout << "Invalid date, failed to add entry\n" << endl;
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
 			}
 			
 		} else if (choice == 3) {		// get data
-			string country;
-			cout << "\nEnter the country name > ";
-			cin >> country;
-			DataEntry result = databaseC.get(country);
+			if (initial) {
+				string country;
+				cout << "\nEnter the country name > ";
+				cin >> country;
+				DataEntry result = databaseC.get(country);
 
-			cout << "Entry found: ";
-			cout << result.getDate() << ", ";
-			cout << result.getCountry() << ", ";
-			cout << result.getCases() << ", ";
-			cout << result.getDeaths() << " ";
+				if (result.getCases() == 0) {
+					cout << "Not found, there is no such entry\n" << endl;
+				} else {
+					cout << "Entry found: ";
+					cout << result.getDate() << ", ";
+					cout << result.getCountry() << ", ";
+					cout << result.getCases() << ", ";
+					cout << result.getDeaths() << "\n" << endl;
+				}
+				
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else if (choice == 4) {		// remove data
-			string country;
-			cout << "\nEnter the country name > ";
-			cin >> country;
-			databaseC.remove(country);
+			if (initial) {
+				string country;
+				cout << "\nEnter the country name > ";
+				cin >> country;
+				databaseC.remove(country);
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else if (choice == 5) {		// display hash table
-			databaseC.display();
+			if (initial) {
+				databaseC.display();
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else {
-			cout << "Quitting..." << endl;
+			cout << "\nQuitting..." << endl;
 			choice = 0;
 		}
 	}
