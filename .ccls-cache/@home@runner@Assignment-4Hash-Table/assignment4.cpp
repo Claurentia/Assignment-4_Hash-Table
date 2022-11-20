@@ -1,3 +1,10 @@
+// Carmel Laurentia
+// assignment4.cpp
+// 11/14/2022
+// Purpose: Implement our own version of Covid Data Tracker.
+//		This assignment will practice your STL in C++ (vector), file 
+//		operation in C++, hash table operations, and collision resolving. 
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -5,6 +12,7 @@
 
 using namespace std;
 
+// This function parse a line in the input file by seperator character
 vector<string> split(string str, char del) {
   vector<string> result;
   string temp = "";
@@ -22,12 +30,14 @@ vector<string> split(string str, char del) {
   return result;
 }
 
+// A class that contain the details of cvsdata
 class cvsdata {
   string date;
   string country;
   int cases;
   int deaths;
 	public:
+		// constructor
   	cvsdata(string date, string country, int cases, int deaths) {
     	this->date = date;
     	this->country = country;
@@ -42,6 +52,7 @@ class cvsdata {
 		int getDeaths() {return deaths;}
 };
 
+// A class that contain the detail of an entry
 class DataEntry {
     private:
       string date;
@@ -52,6 +63,9 @@ class DataEntry {
 			// constructor
 			DataEntry() {}
 
+			// This function load the detail from cvsdata type into DataEntry type
+			// pre: the cvsdata given is valid
+			// post: load the detail in cvsdata into current DataEntry
 			void load(cvsdata data) {
 			 	date = data.getDate();
 			 	country = data.getCountry();
@@ -72,26 +86,31 @@ class DataEntry {
 			void setDeaths(int deaths) {c_deaths = deaths;}
 };
 
+// A class for covid database, implementing hash table with separate chaining
 class CovidDB {
 	private:
     int tableSize = 17;
     vector<vector<DataEntry>> dataBase;
 
 	public:
+	// constructor
 		CovidDB () {
       dataBase = vector<vector<DataEntry>>(tableSize);
 		}
 
+		// This function calculate the index of data position
+		// pre: the string given is valid
+		// post: return the index of where the data should be stored
 		int hash(string country) { 
 			int sum = 0; 
   		for (int i = 0; i < country.length(); i++) {
-				// cout << (i + 1) << " x " << int(country[i]) << endl;
 				sum += (i + 1) * int(country[i]);
     	} 
   		return sum % tableSize;
 		}
 
 	// helper function to check the index contain the country given
+		// return index if found, -1 otherwise
 		int ifContain(string country, int index) {
 			for (int i = 0; i < dataBase[index].size(); i++) {
 				if (dataBase[index][i].getCountry() == country) {
@@ -101,42 +120,24 @@ class CovidDB {
 			return -1;
 		}
 
-	// helper functions to check if date is later than existing one
-
-		// split the date string so it can be compared
-		vector<int> parseDate(string date) {
-			vector<int> breakdown;
-			string temp = "";
-
-			for(int i = 0; i < (int)date.size(); i++) {
-				if (date[i] != '/'){
-	  			temp += date[i];
-    		} else {
-      		breakdown.push_back(stoi(temp));
-      		temp = "";
-				}
-			}
-			
-			breakdown.push_back(stoi(temp));
-			return breakdown;
-		}
-
-		// if date1 is later than date2 return true, false otherwise
+		// check the order of the date
+		// pre: the string given are valid
+		// post: return true if date1 is later than date2, false otherwise
 		bool compareDate(string date1, string date2) {
-			vector<int> first = parseDate(date1);
-			vector<int> second = parseDate(date2);
+			vector<string> first = split(date1, '/');
+			vector<string> second = split(date2, '/');
 			
-			if (first[2] < second[2]) {			// compare year
+			if (stoi(first[2]) < stoi(second[2])) {			// compare year
 				return false;
-			} else if (first[2] > second[2]) {
+			} else if (stoi(first[2]) > stoi(second[2])) {
 				return true;
 			} else {
-				if (first[0] < second[0]) {		// compare month
+				if (stoi(first[0]) < stoi(second[0])) {		// compare month
 					return false;
-				} else if (first[0] > second[0]) {
+				} else if (stoi(first[0]) > stoi(second[0])) {
 					return true;
 				} else {
-					if (first[1] <= second[1]) {		// compare day
+					if (stoi(first[1]) <= stoi(second[1])) {		// compare day
 						return false;
 					} else {
 						return true;
@@ -145,6 +146,8 @@ class CovidDB {
 			}
 		}
 
+	// add a DataEntry type into the database
+		// return true if successfully inserted, false otherwise
 		bool add(DataEntry entry) {
 			int index = hash(entry.getCountry());
 			int inner = ifContain(entry.getCountry(), index);
@@ -163,6 +166,7 @@ class CovidDB {
 			return true;
 		}
 
+	// create initial hash table based on the data read
 		void createInitial(vector<cvsdata> list) {
 			for (int i = 0; i < list.size(); i++) {
 				DataEntry entry;
@@ -171,32 +175,37 @@ class CovidDB {
 			}
 		}
 
+	// get a data entry from the database
+		// return the data entry if found, return null otherwise
 		DataEntry get(string country) {
 			int index = hash(country);
 			int inner = ifContain(country, index);
 			if (inner == -1) {
 				DataEntry null;
+				null.setCases(0);
 				return null;
 			} else {
 				return dataBase[index][inner];
 			}
 		}
 
+	// remove a data entry from the database
 		void remove(string country) {
 			int index = hash(country);
 			int inner = ifContain(country, index);
 			if (inner == -1) {
-				cout << "\nThere is no such country\n" << endl;
+				cout << "Invalid input, there is no such entry\n" << endl;
 			} else {
 				dataBase[index].erase(dataBase[index].begin() + inner);
 				cout << "Entry of " << country << " successfully deleted\n" << endl;
 			}
 		}
 
+	// display all the data entry stored in the database
 		void display() {
 			cout << "\nCovid Database" << endl;
 			for (int i = 0; i < tableSize; i++) {
-				cout << "slot " << i << ": ";
+				cout << "\tSLOT " << i << ": ";
 				for (int j = 0; j < dataBase[i].size(); j++) {
 					if (j != 0) {
 						cout << "-> ";
@@ -212,6 +221,7 @@ class CovidDB {
 		}
 };
 
+// A user interface that allow the user to interact with the database
 void userInterface(vector<cvsdata> recordList) {
 	CovidDB databaseC;
 	int choice = 1;
@@ -238,54 +248,78 @@ void userInterface(vector<cvsdata> recordList) {
 			}
 			
 		} else if (choice == 2) {		// add data
-			DataEntry addition;
-			string date;
-			string country;
-			int cases;
-			int deaths;
+			if (initial) {
+				DataEntry addition;
+				string date;
+				string country;
+				int cases;
+				int deaths;
 
-			cout << "\nEnter the date (mm/dd/yyyy) > ";
-			cin >> date;
-			addition.setDate(date);
-			cout << "Enter the country > ";
-			cin >> country;
-			addition.setCountry(country);
-			cout << "Enter number of cases > ";
-			cin >> cases;
-			addition.setCases(cases);
-			cout << "Enter number of death cases > ";
-			cin >> deaths;
-			addition.setDeaths(deaths);
+				cout << "\nEnter the date (mm/dd/yyyy) > ";
+				cin >> date;
+				addition.setDate(date);
+				cout << "Enter the country > ";
+				cin.ignore();
+				getline(cin, country);
+				addition.setCountry(country);
+				cout << "Enter number of cases > ";
+				cin >> cases;
+				addition.setCases(cases);
+				cout << "Enter number of death cases > ";
+				cin >> deaths;
+				addition.setDeaths(deaths);
 			
-			if (databaseC.add(addition)) {
-				cout << "Entry successfully added\n" << endl;
+				if (databaseC.add(addition)) {
+					cout << "Entry successfully added\n" << endl;
+				} else {
+					cout << "Invalid date, failed to add entry\n" << endl;
+				}
 			} else {
-				cout << "Invalid date, failed to add entry\n" << endl;
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
 			}
 			
 		} else if (choice == 3) {		// get data
-			string country;
-			cout << "\nEnter the country name > ";
-			cin >> country;
-			DataEntry result = databaseC.get(country);
+			if (initial) {
+				string country;
+				cout << "\nEnter the country name > ";
+				cin.ignore();
+				getline(cin, country);
+				DataEntry result = databaseC.get(country);
 
-			cout << "Entry found: ";
-			cout << result.getDate() << ", ";
-			cout << result.getCountry() << ", ";
-			cout << result.getCases() << ", ";
-			cout << result.getDeaths() << " ";
+				if (result.getCases() == 0) {
+					cout << "Not found, there is no such entry\n" << endl;
+				} else {
+					cout << "Entry found: ";
+					cout << result.getDate() << ", ";
+					cout << result.getCountry() << ", ";
+					cout << result.getCases() << ", ";
+					cout << result.getDeaths() << "\n" << endl;
+				}
+				
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else if (choice == 4) {		// remove data
-			string country;
-			cout << "\nEnter the country name > ";
-			cin >> country;
-			databaseC.remove(country);
+			if (initial) {
+				string country;
+				cout << "\nEnter the country name > ";
+				cin.ignore();
+				getline(cin, country);
+				databaseC.remove(country);
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else if (choice == 5) {		// display hash table
-			databaseC.display();
+			if (initial) {
+				databaseC.display();
+			} else {
+				cout << "\nInvalid choice, initial table hasn't been created\n" << endl;
+			}
 			
 		} else {
-			cout << "Quitting..." << endl;
+			cout << "\nQuitting..." << endl;
 			choice = 0;
 		}
 	}
@@ -295,7 +329,7 @@ int main() {
   vector<cvsdata> recordList;
 
   // open the file "WHO-COVID-Data.csv"
-  ifstream file("Afganistan.csv");
+  ifstream file("WHO-COVID-Data.csv");
 
   if (file.is_open()) {
 
